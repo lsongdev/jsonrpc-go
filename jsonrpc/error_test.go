@@ -1,8 +1,9 @@
-package rpc
+package jsonrpc
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestError_Error(t *testing.T) {

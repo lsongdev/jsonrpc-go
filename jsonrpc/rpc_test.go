@@ -1,4 +1,4 @@
-package rpc_test
+package jsonrpc_test
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bubunyo/go-rpc"
+	"github.com/lsongdev/jsonrpc-go/jsonrpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,19 +24,19 @@ type (
 		Echo string `json:"echo"`
 	}
 	TestService struct {
-		ProcessFn func(_ context.Context, req *rpc.RequestParams) (any, error)
+		ProcessFn func(_ context.Context, req *jsonrpc.RequestParams) (any, error)
 	}
 )
 
-func (s EchoService) Register() (string, rpc.RequestMap) {
-	return "EchoService", map[string]rpc.RequestFunc{
+func (s EchoService) Register() (string, jsonrpc.RequestMap) {
+	return "EchoService", map[string]jsonrpc.RequestFunc{
 		"Ping": s.Ping,
 		"Url":  s.Url,
 	}
 }
 
-func (ts TestService) Register() (string, rpc.RequestMap) {
-	return "TestService", map[string]rpc.RequestFunc{
+func (ts TestService) Register() (string, jsonrpc.RequestMap) {
+	return "TestService", map[string]jsonrpc.RequestFunc{
 		"Exec": ts.Exec,
 	}
 }
@@ -45,15 +45,15 @@ func (s TestService) MethodName() string {
 	return "TestService.Exec"
 }
 
-func (s TestService) Exec(ctx context.Context, req *rpc.RequestParams) (any, error) {
+func (s TestService) Exec(ctx context.Context, req *jsonrpc.RequestParams) (any, error) {
 	return s.ProcessFn(ctx, req)
 }
 
-func NewEchoService() rpc.ServiceRegistrar {
+func NewEchoService() jsonrpc.ServiceRegistrar {
 	return EchoService{}
 }
 
-func (s EchoService) Ping(_ context.Context, req *rpc.RequestParams) (any, error) {
+func (s EchoService) Ping(_ context.Context, req *jsonrpc.RequestParams) (any, error) {
 	var er EchoRequest
 	_ = json.Unmarshal(req.Payload, &er)
 	return EchoResponse{
@@ -61,7 +61,7 @@ func (s EchoService) Ping(_ context.Context, req *rpc.RequestParams) (any, error
 	}, nil
 }
 
-func (s EchoService) Url(_ context.Context, req *rpc.RequestParams) (any, error) {
+func (s EchoService) Url(_ context.Context, req *jsonrpc.RequestParams) (any, error) {
 	return EchoResponse{
 		Echo: "http://example.com?this=1&that=2",
 	}, nil
@@ -69,7 +69,7 @@ func (s EchoService) Url(_ context.Context, req *rpc.RequestParams) (any, error)
 
 func requestObj(t *testing.T, method string, params any) *http.Request {
 	reqObj := map[string]any{
-		"jsonrpc": rpc.Version,
+		"jsonrpc": jsonrpc.Version,
 		"method":  method,
 		"params":  params,
 		"id":      method,
@@ -101,7 +101,7 @@ func errorResponse(t *testing.T, resp *http.Response) (int, string) {
 	assert.NotContains(t, r, "result", "Response contains result", r["result"])
 	e := r["error"].(map[string]any)
 	assert.NotEqual(t, 0, e["code"])
-	if int(e["code"].(float64)) != rpc.InvalidRpcVersion.Code {
+	if int(e["code"].(float64)) != jsonrpc.InvalidRpcVersion.Code {
 		assert.Equal(t, "2.0", r["jsonrpc"])
 	}
 	assert.NotEmpty(t, e["message"])
@@ -109,7 +109,7 @@ func errorResponse(t *testing.T, resp *http.Response) (int, string) {
 }
 
 func TestRpcServerResponses(t *testing.T) {
-	server := rpc.NewDefaultServer()
+	server := jsonrpc.NewDefaultServer()
 	server.AddService(NewEchoService())
 	req := requestObj(t, "EchoService.Ping", map[string]any{
 		"echo": "ping",
@@ -121,7 +121,7 @@ func TestRpcServerResponses(t *testing.T) {
 }
 
 func TestRpcServerResponsesWithSpecialChars(t *testing.T) {
-	server := rpc.NewDefaultServer()
+	server := jsonrpc.NewDefaultServer()
 	server.AddService(NewEchoService())
 	req := requestObj(t, "EchoService.Url", map[string]any{})
 	rec := httptest.NewRecorder()
@@ -131,7 +131,7 @@ func TestRpcServerResponsesWithSpecialChars(t *testing.T) {
 }
 
 func TestRpcServer_ErrorResponses(t *testing.T) {
-	server := rpc.NewDefaultServer()
+	server := jsonrpc.NewDefaultServer()
 	server.AddService(NewEchoService())
 	req := requestObj(t, "EchoService.NonMethod", map[string]any{
 		"echo": "ping",
@@ -144,7 +144,7 @@ func TestRpcServer_ErrorResponses(t *testing.T) {
 }
 
 func TestRpcServer_InvalidJsonRpcVersion(t *testing.T) {
-	server := rpc.NewDefaultServer()
+	server := jsonrpc.NewDefaultServer()
 	server.AddService(NewEchoService())
 	reqObj := map[string]any{
 		"jsonrpc": "1.0",
@@ -166,7 +166,7 @@ func TestRpcServer_InvalidJsonRpcVersion(t *testing.T) {
 }
 
 func TestRpcServer_EmptyMethodName(t *testing.T) {
-	server := rpc.NewDefaultServer()
+	server := jsonrpc.NewDefaultServer()
 	server.AddService(NewEchoService())
 	cases := []string{" ", "", "\n\n", "\t\n"}
 	for _, m := range cases {
@@ -183,9 +183,9 @@ func TestRpcServer_EmptyMethodName(t *testing.T) {
 }
 
 func TestRpcServer_ValidRequestParams(t *testing.T) {
-	server := rpc.NewDefaultServer()
+	server := jsonrpc.NewDefaultServer()
 	ts := &TestService{}
-	ts.ProcessFn = func(_ context.Context, req *rpc.RequestParams) (any, error) {
+	ts.ProcessFn = func(_ context.Context, req *jsonrpc.RequestParams) (any, error) {
 		return "ok", nil
 	}
 	server.AddService(ts)
@@ -210,13 +210,13 @@ func TestRpcServer_ValidRequestParams(t *testing.T) {
 }
 
 func TestRpcServer_ExecutionTimeout(t *testing.T) {
-	opts := rpc.Opts{
+	opts := jsonrpc.Opts{
 		ExecutionTimeout: time.Second,
-		MaxBytesRead:     rpc.MaxBytesRead,
+		MaxBytesRead:     jsonrpc.MaxBytesRead,
 	}
-	server := rpc.NewServer(opts)
+	server := jsonrpc.NewServer(opts)
 	ts := &TestService{}
-	ts.ProcessFn = func(_ context.Context, req *rpc.RequestParams) (any, error) {
+	ts.ProcessFn = func(_ context.Context, req *jsonrpc.RequestParams) (any, error) {
 		time.Sleep(opts.ExecutionTimeout + (2 * time.Second))
 		return "ok", nil
 	}
@@ -225,18 +225,18 @@ func TestRpcServer_ExecutionTimeout(t *testing.T) {
 	req := requestObj(t, ts.MethodName(), nil)
 	server.ServeHTTP(rec, req)
 	code, msg := errorResponse(t, rec.Result())
-	assert.Equal(t, rpc.ExecutionTimeoutError.Code, code)
-	assert.Equal(t, rpc.ExecutionTimeoutError.Message, msg)
+	assert.Equal(t, jsonrpc.ExecutionTimeoutError.Code, code)
+	assert.Equal(t, jsonrpc.ExecutionTimeoutError.Message, msg)
 }
 
 func TestRpcServer_ExecuteMultipleRequests(t *testing.T) {
-	opts := rpc.Opts{
+	opts := jsonrpc.Opts{
 		ExecutionTimeout: time.Second,
-		MaxBytesRead:     rpc.MaxBytesRead,
+		MaxBytesRead:     jsonrpc.MaxBytesRead,
 	}
-	server := rpc.NewServer(opts)
+	server := jsonrpc.NewServer(opts)
 	ts := &TestService{}
-	ts.ProcessFn = func(_ context.Context, req *rpc.RequestParams) (any, error) {
+	ts.ProcessFn = func(_ context.Context, req *jsonrpc.RequestParams) (any, error) {
 		var s string
 		_ = json.Unmarshal(req.Payload, &s)
 		switch s {
@@ -254,19 +254,19 @@ func TestRpcServer_ExecuteMultipleRequests(t *testing.T) {
 
 	reqObj := []map[string]any{
 		{
-			"jsonrpc": rpc.Version,
+			"jsonrpc": jsonrpc.Version,
 			"method":  ts.MethodName(),
 			"params":  "random",
 			"id":      "test-1",
 		},
 		{
-			"jsonrpc": rpc.Version,
+			"jsonrpc": jsonrpc.Version,
 			"method":  ts.MethodName(),
 			"params":  "error",
 			"id":      "test-2",
 		},
 		{
-			"jsonrpc": rpc.Version,
+			"jsonrpc": jsonrpc.Version,
 			"method":  ts.MethodName(),
 			"params":  "wait",
 			"id":      "test-3",

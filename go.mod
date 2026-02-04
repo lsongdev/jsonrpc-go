@@ -1,4 +1,4 @@
-module github.com/bubunyo/go-rpc
+module github.com/lsongdev/jsonrpc-go
 
 go 1.19
 

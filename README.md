@@ -1,4 +1,4 @@
-# go-rpc
+# jsonrpc-go
 
 [![Build Status](https://github.com/bubunyo/go-rpc/workflows/test-unit/badge.svg)](https://github.com/bubunyo/go-rpc/actions?query=branch%3Amaster+workflow%3Atest-unit)
 [![GoDoc](https://godoc.org/github.com/bubunyo/go-rpc?status.svg)](https://pkg.go.dev/github.com/bubunyo/go-rpc)
