@@ -25,21 +25,20 @@ func NewJSONRPCClient(transport common.Transport) *JSONRPCClient {
 // Call sends a JSON-RPC request and waits for the response.
 func (c *JSONRPCClient) Call(method string, params any, result any) error {
 	id := c.idCounter.Add(1)
-
 	req := common.Request{
 		JSONRPC: "2.0",
 		ID:      id,
 		Method:  method,
 		Params:  params,
 	}
-
+	// log.Println("--->", req)
 	// Send request
 	if err := c.transport.Send(&req); err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
-
 	// Read response
 	data, err := c.transport.Recv()
+	// log.Println("<---", string(data))
 	if err != nil {
 		return fmt.Errorf("failed to receive response: %w", err)
 	}
@@ -52,7 +51,7 @@ func (c *JSONRPCClient) Call(method string, params any, result any) error {
 		return fmt.Errorf("rpc error %d: %s", resp.Error.Code, resp.Error.Message)
 	}
 
-	if result != nil && resp.Result != "" {
+	if result != nil && resp.Result != nil {
 		if err := json.Unmarshal([]byte(resp.Result), result); err != nil {
 			return fmt.Errorf("failed to unmarshal result: %w", err)
 		}

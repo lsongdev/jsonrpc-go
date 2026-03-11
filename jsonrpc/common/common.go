@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -14,10 +15,10 @@ type Request struct {
 
 // Response represents a JSON-RPC 2.0 response.
 type Response struct {
-	JSONRPC string `json:"jsonrpc"`          // must always be 2.0
-	ID      any    `json:"id"`               // the id passed in the request object
-	Result  string `json:"result,omitempty"` // required when the request is successful
-	Error   *Error `json:"error,omitempty"`  // required when the request is a failure
+	JSONRPC string          `json:"jsonrpc"`          // must always be 2.0
+	ID      any             `json:"id"`               // the id passed in the request object
+	Result  json.RawMessage `json:"result,omitempty"` // required when the request is successful
+	Error   *Error          `json:"error,omitempty"`  // required when the request is a failure
 }
 
 // Notification represents a JSON-RPC 2.0 notification (no ID).

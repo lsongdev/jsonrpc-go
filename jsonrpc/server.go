@@ -75,7 +75,7 @@ func errorResponse(req *common.Request, err error) common.Response {
 	}
 }
 
-func successResponse(req common.Request, body string) common.Response {
+func successResponse(req common.Request, body []byte) common.Response {
 	return common.Response{
 		JSONRPC: req.JSONRPC,
 		ID:      req.ID,

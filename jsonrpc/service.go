@@ -90,7 +90,7 @@ func (s *Service) handle(req common.Request) common.Response {
 	if err != nil {
 		return errorResponse(&req, err)
 	}
-	return successResponse(req, string(body))
+	return successResponse(req, body)
 }
 
 func (s *Service) handleMethod(req common.Request) (any, error) {
